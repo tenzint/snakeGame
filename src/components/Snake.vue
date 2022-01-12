@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-let canvasRef = ref<HTMLCanvasElement | null>();
+let canvasRef = ref<HTMLCanvasElement | null | undefined>();
 let self: SnakeGame;
-let score: number = ref(0);
-let highscore: number = ref(0);
+let score = ref<number>(0);
+let highscore = ref<number>(0);
 interface Position {
   x: number;
   y: number;
 }
 class SnakeGame {
-  cRef: HTMLCanvasElement | null;
+  cRef: HTMLCanvasElement | null | undefined;
   ctx: CanvasRenderingContext2D | null;
   unit: number;
   width: number;
@@ -46,10 +46,10 @@ class SnakeGame {
     if (window.innerWidth >= 1080) this.unit = 30;
     else if (window.innerWidth >= 720) this.unit = 20;
     else this.unit = 15;
-    this.cRef.width = Math.floor(window.innerWidth * 0.8);
-    this.cRef.height = Math.floor(window.innerHeight * 0.8);
-    this.width = Math.floor(this.cRef.width / this.unit);
-    this.height = Math.floor(this.cRef.height / this.unit);
+    this.cRef!.width = Math.floor(window.innerWidth * 0.8);
+    this.cRef!.height = Math.floor(window.innerHeight * 0.8);
+    this.width = Math.floor(this.cRef!.width / this.unit);
+    this.height = Math.floor(this.cRef!.height / this.unit);
     let halfW = Math.floor(this.width / 2);
     let halfH = Math.floor(this.height / 2);
     this.snake = [];
@@ -147,38 +147,38 @@ class SnakeGame {
     });
   }
   draw(): void {
-    this.ctx = this.cRef.getContext("2d");
-    this.ctx.fillStyle = this.color2;
-    this.ctx.fillRect(0, 0, this.width * this.unit, this.height * this.unit);
-    this.ctx.fillStyle = this.canvasColor;
+    this.ctx = this.cRef!.getContext("2d");
+    this.ctx!.fillStyle = this.color2;
+    this.ctx!.fillRect(0, 0, this.width * this.unit, this.height * this.unit);
+    this.ctx!.fillStyle = this.canvasColor;
     for (let i: number = 0; i < this.width; i += 1) {
       for (let j: number = 0; j < this.height; j += 1) {
         if ((i % 2 === 0 && j % 2 === 1) || (i % 2 === 1 && j % 2 === 0))
-          this.ctx.fillRect(i * this.unit, j * this.unit, this.unit, this.unit);
+          this.ctx!.fillRect(i * this.unit, j * this.unit, this.unit, this.unit);
       }
     }
     this.drawSnake();
     this.drawFood();
   }
   drawSnake(): void {
-    this.ctx?.beginPath();
-    this.ctx.fillStyle = this.snakeColor;
+    this.ctx!.beginPath();
+    this.ctx!.fillStyle = this.snakeColor;
     this.snake.forEach((pos) => {
-      this.ctx?.rect(pos.x * this.unit, pos.y * this.unit, this.unit, this.unit);
-      this.ctx?.fill();
+      this.ctx!.rect(pos.x * this.unit, pos.y * this.unit, this.unit, this.unit);
+      this.ctx!.fill();
     });
-    this.ctx?.closePath();
+    this.ctx!.closePath();
   }
   drawFood(): void {
-    this.ctx.fillStyle = "#cc0000";
-    this.ctx.fillRect(
+    this.ctx!.fillStyle = "#cc0000";
+    this.ctx!.fillRect(
       this.food.x * this.unit,
       this.food.y * this.unit,
       this.unit,
       this.unit
     );
   }
-  arrowPressed(e: string): void {
+  arrowPressed(e: KeyboardEvent): void {
     if (e.code === "ArrowUp") self.moveUp();
     else if (e.code === "ArrowDown") self.moveDown();
     else if (e.code === "ArrowLeft") self.moveLeft();
