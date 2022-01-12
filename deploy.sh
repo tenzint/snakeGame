@@ -4,7 +4,7 @@
 set -e
 
 # build
-npm run build
+# npm run build
 
 git add dist -f
 git commit -m 'deploy dist for production'
