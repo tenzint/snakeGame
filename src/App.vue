@@ -15,10 +15,9 @@ html,
 body,
 #app {
   margin: 0;
-  padding: 0;
   font-size: 1em;
   line-height: 2;
-  background-color: rgba(128, 128, 128, 0.2);
+  background-color: rgba(128, 128, 128, 0.3);
   max-height: 100vh;
 }
 

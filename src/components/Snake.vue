@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-let canvasRef = ref<HTMLCanvasElement | null | undefined>();
+var canvasRef = ref<HTMLCanvasElement | null | undefined>(null);
+var titleRef = ref<HTMLDivElement | null>(null);
+var containerRef = ref<HTMLDivElement | null>(null);
 let self: SnakeGame;
 let score = ref<number>(0);
 let highscore = ref<number>(0);
@@ -8,6 +10,14 @@ interface Position {
   x: number;
   y: number;
 }
+
+onMounted(() => {
+  const snake = new SnakeGame();
+  document.addEventListener("keydown", snake.arrowPressed);
+  snake.start();
+  score.value = snake.score;
+  console.log(snake.score);
+});
 class SnakeGame {
   cRef: HTMLCanvasElement | null | undefined;
   ctx: CanvasRenderingContext2D | null;
@@ -42,14 +52,25 @@ class SnakeGame {
     this.food = { x: Math.random() * this.width, y: Math.random() * this.height };
     this.score = this.snake.length;
   }
-  start(): void {
-    if (window.innerWidth >= 1080) this.unit = 30;
-    else if (window.innerWidth >= 720) this.unit = 20;
-    else this.unit = 15;
-    this.cRef!.width = Math.floor(window.innerWidth * 0.8);
-    this.cRef!.height = Math.floor(window.innerHeight * 0.8);
+  setup(): void {
+    if (window.innerWidth >= 1080) this.unit = 40;
+    else if (window.innerWidth >= 720) this.unit = 30;
+    else this.unit = 20;
+    containerRef!.value.style.height =
+      window.innerHeight - titleRef!.value.offsetHeight + "px";
+
+    let widthRatio = 1;
+    if (window.innerWidth >= 600) widthRatio = 0.8;
+    this.cRef!.width =
+      Math.floor((window.innerWidth * widthRatio) / this.unit) * this.unit;
+    this.cRef!.height =
+      Math.floor((window.innerHeight - titleRef.value.offsetHeight) / this.unit) *
+      this.unit;
     this.width = Math.floor(this.cRef!.width / this.unit);
     this.height = Math.floor(this.cRef!.height / this.unit);
+  }
+  start(): void {
+    this.setup();
     let halfW = Math.floor(this.width / 2);
     let halfH = Math.floor(this.height / 2);
     this.snake = [];
@@ -185,20 +206,15 @@ class SnakeGame {
     else if (e.code === "ArrowRight") self.moveRight();
   }
 }
-
-onMounted(() => {
-  const snake = new SnakeGame();
-  document.addEventListener("keydown", snake.arrowPressed);
-  snake.start();
-  score.value = snake.score;
-  console.log(snake.score);
-});
 </script>
 
 <template>
-  <span>Score = {{ score }}</span>
-  <span>High Score = {{ highscore }}</span>
-  <div class="container">
+  <div class="title-container" ref="titleRef">
+    <span class="title-item">SCORE: {{ score }}</span>
+    <span class="title-item">HIGH SCORE: {{ highscore }}</span>
+  </div>
+
+  <div class="container" ref="containerRef">
     <canvas id="snakeCanvas" ref="canvasRef"> </canvas>
   </div>
 </template>
@@ -208,13 +224,19 @@ onMounted(() => {
   margin: 0;
   padding: 0;
 }
+.title-container {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: row;
+  background: rgba(128, 128, 128, 0.5);
+}
 .container {
   margin: 0;
   padding: 0;
   display: flex;
   align-items: center;
-  align-content: center;
   justify-content: center;
-  height: 100vh;
+  max-height: 100%;
 }
 </style>
