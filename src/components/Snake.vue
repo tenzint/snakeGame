@@ -2,6 +2,8 @@
 import { ref, onMounted } from "vue";
 let canvasRef = ref<HTMLCanvasElement | null>();
 let self: SnakeGame;
+let score: number = ref(0);
+let highscore: number = ref(0);
 interface Position {
   x: number;
   y: number;
@@ -19,6 +21,7 @@ class SnakeGame {
   velocity: Position;
   setInterval: number;
   food: Position;
+  score: number;
   constructor(
     unit = 20,
     width = window.innerWidth / 20,
@@ -37,53 +40,108 @@ class SnakeGame {
     this.velocity = { x: 1, y: 0 };
     this.setInterval = 0;
     this.food = { x: Math.random() * this.width, y: Math.random() * this.height };
+    this.score = this.snake.length;
   }
   start(): void {
     if (window.innerWidth >= 1080) this.unit = 30;
     else if (window.innerWidth >= 720) this.unit = 20;
     else this.unit = 15;
-    this.cRef.width = window.innerWidth * 0.8;
-    this.cRef.height = window.innerHeight * 0.8;
-    this.width = Math.floor(this.cRef.width / this.unit) + 1;
-    this.height = Math.floor(this.cRef.height / this.unit) + 1;
+    this.cRef.width = Math.floor(window.innerWidth * 0.8);
+    this.cRef.height = Math.floor(window.innerHeight * 0.8);
+    this.width = Math.floor(this.cRef.width / this.unit);
+    this.height = Math.floor(this.cRef.height / this.unit);
     let halfW = Math.floor(this.width / 2);
     let halfH = Math.floor(this.height / 2);
+    this.snake = [];
+    this.velocity = { x: 1, y: 0 };
+    this.food = { x: Math.random() * this.width, y: Math.random() * this.height };
     this.snake.push({ x: halfW, y: halfH });
     this.snake.push({ x: halfW - 1, y: halfH });
     this.snake.push({ x: halfW - 2, y: halfH });
     this.snake.push({ x: halfW - 3, y: halfH });
     this.snake.push({ x: halfW - 4, y: halfH });
+    this.updateScore();
     this.randomizeFood();
-    this.setInterval = setInterval(() => this.moveNext(), 300);
+    if (this.setInterval) clearInterval(this.setInterval);
+    this.setInterval = setInterval(() => this.moveNext(), 200);
+  }
+  updateScore(): void {
+    this.score = this.snake.length;
+  }
+  didSnakeEat(): boolean {
+    if (this.snake[0].x === this.food.x && this.snake[0].y === this.food.y) {
+      this.randomizeFood();
+      this.updateScore();
+      return true;
+    } else return false;
+  }
+  restart(): void {
+    // keep code dry. Some restart codes here
+    if (highscore.value < this.score) {
+      highscore.value = this.score;
+    }
+    this.start();
+  }
+  checkForMistakes(): void {
+    if (
+      this.snake[0].x < 0 ||
+      this.snake[0].x >= this.width ||
+      this.snake[0].y < 0 ||
+      this.snake[0].y >= this.height
+    ) {
+      // snake is outside of our canvas
+      // Game over!
+      this.restart();
+      return;
+    }
+    this.snake.forEach((snakePart) => {
+      if (this.snake[0] === snakePart) {
+        // found the snake head itself -> ignore
+        return;
+      }
+      if (this.snake[0].x === snakePart.x && this.snake[0].y === snakePart.y) {
+        this.restart();
+        return;
+      }
+    });
   }
   moveNext(): void {
     let newSnakePos: Position = { x: this.snake[0].x, y: this.snake[0].y };
     newSnakePos.x += this.velocity.x;
     newSnakePos.y += this.velocity.y;
     this.snake.unshift(newSnakePos);
-    this.snake.pop();
+    this.checkForMistakes();
+
+    let ate = this.didSnakeEat();
+    if (!ate) this.snake.pop();
     this.ctx?.clearRect(0, 0, this.width * this.unit, this.height * this.unit);
     this.draw();
   }
+  /*----------------------------------------------------------------
+   * Instead of checking for `velocity.x/y`,
+   * I am checking for the change in x/y.
+   *
+   * This provides a buffer for fast keypresses
+   */
   moveLeft(): void {
-    this.velocity = { x: -1, y: 0 };
+    if (this.snake[0].x - this.snake[1].x === 0) this.velocity = { x: -1, y: 0 };
   }
   moveRight(): void {
-    this.velocity = { x: 1, y: 0 };
+    if (this.snake[0].x - this.snake[1].x === 0) this.velocity = { x: 1, y: 0 };
   }
   moveUp(): void {
-    this.velocity = { x: 0, y: -1 };
+    if (this.snake[0].y - this.snake[1].y === 0) this.velocity = { x: 0, y: -1 };
   }
   moveDown(): void {
-    this.velocity = { x: 0, y: 1 };
+    if (this.snake[0].y - this.snake[1].y === 0) this.velocity = { x: 0, y: 1 };
   }
   randomizeFood(): void {
     this.food = {
-      x: Math.floor(Math.random() * this.width) - 2,
-      y: Math.floor(Math.random() * this.height) - 2,
+      x: Math.floor(Math.random() * this.width),
+      y: Math.floor(Math.random() * this.height),
     };
     this.snake.forEach((snakePart) => {
-      if (snakePart == this.food) {
+      if (snakePart.x === this.food.x && snakePart.y === this.food.y) {
         this.randomizeFood();
       }
     });
@@ -132,10 +190,14 @@ onMounted(() => {
   const snake = new SnakeGame();
   document.addEventListener("keydown", snake.arrowPressed);
   snake.start();
+  score.value = snake.score;
+  console.log(snake.score);
 });
 </script>
 
 <template>
+  <span>Score = {{ score }}</span>
+  <span>High Score = {{ highscore }}</span>
   <div class="container">
     <canvas id="snakeCanvas" ref="canvasRef"> </canvas>
   </div>
@@ -146,8 +208,6 @@ onMounted(() => {
   border: 5px solid #000000;
   margin: 0;
   padding: 0;
-  width: 80vw;
-  height: 80vh;
 }
 .container {
   margin: 0;
