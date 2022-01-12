@@ -205,7 +205,6 @@ onMounted(() => {
 
 <style scoped>
 #snakeCanvas {
-  border: 5px solid #000000;
   margin: 0;
   padding: 0;
 }
