@@ -51,7 +51,7 @@ class SnakeGame {
     this.velocity = { x: 1, y: 0 };
     this.timer = 0;
     this.food = { x: Math.random() * this.width, y: Math.random() * this.height };
-    this.score = this.snake.length;
+    this.score = 0;
     this.playingMode = false;
   }
   setup(): void {
@@ -71,15 +71,18 @@ class SnakeGame {
     this.width = Math.floor(this.cRef!.width / this.unit);
     this.height = Math.floor(this.cRef!.height / this.unit);
   }
+  cleanTimer(): void {
+    clearInterval(this.timer);
+  }
   togglePausePlay(): void {
     if (this.playingMode) {
       // Playing; pause the game
       this.playingMode = false;
-      if (this.timer) clearInterval(this.timer);
+      if (this.timer) this.cleanTimer();
     } else {
       // Paused; play the game
       this.playingMode = true;
-      if (this.timer) clearInterval(this.timer);
+      if (this.timer) this.cleanTimer();
       this.timer = setInterval(() => this.moveNext(), 150);
     }
   }
@@ -97,12 +100,12 @@ class SnakeGame {
     this.snake.push({ x: halfW - 4, y: halfH });
     this.updateScore();
     this.randomizeFood();
-    this.playingMode = true;
-    if (this.timer) clearInterval(this.timer);
-    this.timer = setInterval(() => this.moveNext(), 150);
+    this.playingMode = false;
+    this.moveNext();
   }
   updateScore(): void {
     this.score = this.snake.length;
+    score.value = this.score;
   }
   didSnakeEat(): boolean {
     if (this.snake[0].x === this.food.x && this.snake[0].y === this.food.y) {
@@ -113,9 +116,11 @@ class SnakeGame {
   }
   restart(): void {
     // keep code dry. Some restart codes here
-    if (highscore.value < this.score) {
-      highscore.value = this.score;
+    if (highscore.value < score.value) {
+      highscore.value = score.value;
     }
+    this.cleanTimer();
+    this.playingMode = false;
     this.start();
   }
   checkForMistakes(): void {
@@ -215,13 +220,16 @@ class SnakeGame {
     );
   }
   arrowPressed(e: KeyboardEvent): void {
-    if (e.code === "ArrowUp") self.moveUp();
-    else if (e.code === "ArrowDown") self.moveDown();
-    else if (e.code === "ArrowLeft") self.moveLeft();
-    else if (e.code === "ArrowRight") self.moveRight();
     // Game settings related keys pressed
-    else if (e.code === "KeyP") {
+    if (e.code === "KeyP") {
       self.togglePausePlay();
+    }
+    // arrows pressed - only when playing the game
+    if (self.playingMode) {
+      if (e.code === "ArrowUp") self.moveUp();
+      else if (e.code === "ArrowDown") self.moveDown();
+      else if (e.code === "ArrowLeft") self.moveLeft();
+      else if (e.code === "ArrowRight") self.moveRight();
     }
   }
 }
@@ -229,6 +237,7 @@ class SnakeGame {
 
 <template>
   <div class="title-container" ref="titleRef">
+    <h1 class="title">Snake Game</h1>
     <span class="title-item">SCORE: {{ score }}</span>
     <span class="title-item">HIGH SCORE: {{ highscore }}</span>
   </div>
@@ -247,8 +256,15 @@ class SnakeGame {
   margin: 0;
   padding: 0;
   display: flex;
-  flex-direction: row;
+  flex-flow: row wrap;
+  align-items: center;
+  justify-content: center;
   background: rgba(128, 128, 128, 0.5);
+}
+@media (max-width: 800px) {
+  .title-container {
+    flex-direction: column;
+  }
 }
 .container {
   margin: 0;
@@ -257,5 +273,18 @@ class SnakeGame {
   align-items: center;
   justify-content: center;
   max-height: 100%;
+}
+.title {
+  margin: 1rem 2rem;
+  padding: 0;
+  font-size: 1.5rem;
+  flex-grow: 10;
+  text-align: center;
+}
+.title-item {
+  margin: 1rem 1rem;
+  padding: 0;
+  flex-grow: 1;
+  text-align: right;
 }
 </style>
