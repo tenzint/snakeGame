@@ -29,9 +29,10 @@ class SnakeGame {
   snakeColor: string;
   snake: Position[];
   velocity: Position;
-  setInterval: number;
+  timer: number;
   food: Position;
   score: number;
+  playingMode: boolean;
   constructor(
     unit = 20,
     width = window.innerWidth / 20,
@@ -48,9 +49,10 @@ class SnakeGame {
     this.snakeColor = "#00cc00";
     this.snake = [];
     this.velocity = { x: 1, y: 0 };
-    this.setInterval = 0;
+    this.timer = 0;
     this.food = { x: Math.random() * this.width, y: Math.random() * this.height };
     this.score = this.snake.length;
+    this.playingMode = false;
   }
   setup(): void {
     if (window.innerWidth >= 1080) this.unit = 40;
@@ -69,6 +71,18 @@ class SnakeGame {
     this.width = Math.floor(this.cRef!.width / this.unit);
     this.height = Math.floor(this.cRef!.height / this.unit);
   }
+  togglePausePlay(): void {
+    if (this.playingMode) {
+      // Playing; pause the game
+      this.playingMode = false;
+      if (this.timer) clearInterval(this.timer);
+    } else {
+      // Paused; play the game
+      this.playingMode = true;
+      if (this.timer) clearInterval(this.timer);
+      this.timer = setInterval(() => this.moveNext(), 150);
+    }
+  }
   start(): void {
     this.setup();
     let halfW = Math.floor(this.width / 2);
@@ -83,8 +97,9 @@ class SnakeGame {
     this.snake.push({ x: halfW - 4, y: halfH });
     this.updateScore();
     this.randomizeFood();
-    if (this.setInterval) clearInterval(this.setInterval);
-    this.setInterval = setInterval(() => this.moveNext(), 200);
+    this.playingMode = true;
+    if (this.timer) clearInterval(this.timer);
+    this.timer = setInterval(() => this.moveNext(), 150);
   }
   updateScore(): void {
     this.score = this.snake.length;
@@ -204,6 +219,10 @@ class SnakeGame {
     else if (e.code === "ArrowDown") self.moveDown();
     else if (e.code === "ArrowLeft") self.moveLeft();
     else if (e.code === "ArrowRight") self.moveRight();
+    // Game settings related keys pressed
+    else if (e.code === "KeyP") {
+      self.togglePausePlay();
+    }
   }
 }
 </script>
