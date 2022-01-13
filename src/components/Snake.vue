@@ -58,15 +58,15 @@ class SnakeGame {
     if (window.innerWidth >= 1080) this.unit = 40;
     else if (window.innerWidth >= 720) this.unit = 30;
     else this.unit = 20;
-    containerRef!.value.style.height =
-      window.innerHeight - titleRef!.value.offsetHeight + "px";
+    containerRef.value!.style.height =
+      window.innerHeight - titleRef.value!.offsetHeight + "px";
 
     let widthRatio = 1;
     if (window.innerWidth >= 600) widthRatio = 0.8;
     this.cRef!.width =
       Math.floor((window.innerWidth * widthRatio) / this.unit) * this.unit;
     this.cRef!.height =
-      Math.floor((window.innerHeight - titleRef.value.offsetHeight) / this.unit) *
+      Math.floor((window.innerHeight - titleRef.value!.offsetHeight) / this.unit) *
       this.unit;
     this.width = Math.floor(this.cRef!.width / this.unit);
     this.height = Math.floor(this.cRef!.height / this.unit);
