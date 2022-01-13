@@ -206,7 +206,12 @@ class SnakeGame {
     this.ctx!.beginPath();
     this.ctx!.fillStyle = this.snakeColor;
     this.snake.forEach((pos) => {
-      this.ctx!.rect(pos.x * this.unit, pos.y * this.unit, this.unit, this.unit);
+      this.ctx!.rect(
+        pos.x * this.unit,
+        (pos.y + 0.2) * this.unit,
+        this.unit,
+        this.unit * 0.6
+      );
       this.ctx!.fill();
     });
     this.ctx!.closePath();
@@ -221,11 +226,11 @@ class SnakeGame {
       (this.food.y + 0.5) * this.unit,
       this.unit
     );
-    radgrad.addColorStop(0, "#ffff00");
+    radgrad.addColorStop(0, "#aaaa00");
     radgrad.addColorStop(0.1, "#999922");
     radgrad.addColorStop(0.1, "#777733");
     radgrad.addColorStop(0.2, "#441505");
-    radgrad.addColorStop(0.3, "#880101");
+    radgrad.addColorStop(0.4, "#880101");
     radgrad.addColorStop(0.9, "#cc0000");
     radgrad.addColorStop(1, this.foodColor);
     this.ctx!.fillStyle = radgrad;
@@ -247,7 +252,6 @@ class SnakeGame {
     );
     this.ctx!.closePath();
     this.ctx!.fill();
-    
   }
   arrowPressed(e: KeyboardEvent): void {
     // Game settings related keys pressed
@@ -282,6 +286,7 @@ class SnakeGame {
   margin: 0;
   padding: 0;
   border: 5px ridge #aaaaaa;
+  box-shadow: 0 5px 10px 10px rgb(256, 256, 256, 0.3);
 }
 .title-container {
   margin: 0;

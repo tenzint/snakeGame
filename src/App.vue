@@ -11,6 +11,7 @@ components: {
 </template>
 
 <style>
+document,
 html,
 body,
 #app {
