@@ -16,7 +16,6 @@ onMounted(() => {
   document.addEventListener("keydown", snake.arrowPressed);
   snake.start();
   score.value = snake.score;
-  console.log(snake.score);
 });
 class SnakeGame {
   cRef: HTMLCanvasElement | null | undefined;
@@ -27,6 +26,7 @@ class SnakeGame {
   canvasColor: string;
   color2: string;
   snakeColor: string;
+  foodColor: string;
   snake: Position[];
   velocity: Position;
   timer: number;
@@ -46,7 +46,8 @@ class SnakeGame {
     this.height = height;
     this.canvasColor = "rgba(128, 128, 128, 0.3)";
     this.color2 = "rgba(128, 128, 128, 0.5)";
-    this.snakeColor = "#00cc00";
+    this.snakeColor = "#1B5E20";
+    this.foodColor = "#ff0000";
     this.snake = [];
     this.velocity = { x: 1, y: 0 };
     this.timer = 0;
@@ -66,7 +67,7 @@ class SnakeGame {
     this.cRef!.width =
       Math.floor((window.innerWidth * widthRatio) / this.unit) * this.unit;
     this.cRef!.height =
-      Math.floor((window.innerHeight - titleRef.value!.offsetHeight) / this.unit) *
+      Math.floor((window.innerHeight - titleRef.value!.offsetHeight - 10) / this.unit) *
       this.unit;
     this.width = Math.floor(this.cRef!.width / this.unit);
     this.height = Math.floor(this.cRef!.height / this.unit);
@@ -211,13 +212,42 @@ class SnakeGame {
     this.ctx!.closePath();
   }
   drawFood(): void {
-    this.ctx!.fillStyle = "#cc0000";
-    this.ctx!.fillRect(
-      this.food.x * this.unit,
-      this.food.y * this.unit,
-      this.unit,
+    this.ctx!.globalAlpha = 0.8;
+    let radgrad = this.ctx!.createRadialGradient(
+      (this.food.x + 0.4) * this.unit,
+      (this.food.y + 0.4) * this.unit,
+      0,
+      (this.food.x + 0.5) * this.unit,
+      (this.food.y + 0.5) * this.unit,
       this.unit
     );
+    radgrad.addColorStop(0, "#ffff00");
+    radgrad.addColorStop(0.1, "#999922");
+    radgrad.addColorStop(0.1, "#777733");
+    radgrad.addColorStop(0.2, "#441505");
+    radgrad.addColorStop(0.3, "#880101");
+    radgrad.addColorStop(0.9, "#cc0000");
+    radgrad.addColorStop(1, this.foodColor);
+    this.ctx!.fillStyle = radgrad;
+    /*
+    this.ctx!.fillRect(
+      (this.food.x + 0.2) * this.unit,
+      (this.food.y + 0.2) * this.unit,
+      0.6 * this.unit,
+      0.6 * this.unit
+    );
+    */
+    this.ctx!.beginPath();
+    this.ctx!.arc(
+      (this.food.x + 0.5) * this.unit,
+      (this.food.y + 0.5) * this.unit,
+      this.unit * 0.3,
+      0,
+      2 * Math.PI
+    );
+    this.ctx!.closePath();
+    this.ctx!.fill();
+    
   }
   arrowPressed(e: KeyboardEvent): void {
     // Game settings related keys pressed
@@ -251,6 +281,7 @@ class SnakeGame {
 #snakeCanvas {
   margin: 0;
   padding: 0;
+  border: 5px ridge #aaaaaa;
 }
 .title-container {
   margin: 0;
