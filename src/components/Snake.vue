@@ -303,13 +303,9 @@ class SnakeGame {
       normalizedIsUp = true;
     } else {
       normalizedIsUp = false;
-      console.log(vector);
-      console.log(backVector)
     }
-    console.log(normalizedIsUp);
     this.ctx!.save();
     this.rotateSnakePart(pos, backVector);
-    console.log("vector ---------- backVector");
     this.ctx!.fillStyle = this.snakeColor;
 
     this.ctx!.beginPath();
