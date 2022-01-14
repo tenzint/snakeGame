@@ -206,6 +206,7 @@ class SnakeGame {
     this.ctx!.beginPath();
     this.ctx!.fillStyle = this.snakeColor;
     let vec: Position = { x: 0, y: 0 };
+    let vecBack: Position = { x: 0, y: 0 };
     this.snake.forEach((pos, i) => {
       if (i === 0) {
         vec.x = this.velocity.x;
@@ -218,7 +219,10 @@ class SnakeGame {
       } else {
         vec.x = this.snake[i - 1].x - this.snake[i].x;
         vec.y = this.snake[i - 1].y - this.snake[i].y;
-        this.drawSnakeBody(pos, vec);
+        vecBack.x = this.snake[i].x - this.snake[i + 1].x;
+        vecBack.y = this.snake[i].y - this.snake[i + 1].y;
+        if (vecBack.x === vec.x && vec.y === vecBack.y) this.drawSnakeBody(pos, vec);
+        else this.drawCurvedSnake(pos, vec, vecBack);
       }
     });
     this.ctx!.closePath();
@@ -253,6 +257,23 @@ class SnakeGame {
     this.ctx!.lineTo(pos.x * this.unit, (pos.y + 0.8) * this.unit);
     this.ctx!.closePath();
     this.ctx!.fill();
+    this.ctx!.fillStyle = "#777700";
+    this.ctx!.beginPath();
+    this.ctx!.arc(
+      (pos.x + 0.7) * this.unit,
+      (pos.y + 0.3) * this.unit,
+      this.unit * 0.15,
+      0,
+      2 * Math.PI
+    );
+    this.ctx!.arc(
+      (pos.x + 0.7) * this.unit,
+      (pos.y + 0.7) * this.unit,
+      this.unit * 0.15,
+      0,
+      2 * Math.PI
+    );
+    this.ctx!.fill();
     this.ctx!.restore();
   }
   drawSnakeTail(pos: Position, vector: Position): void {
@@ -264,6 +285,68 @@ class SnakeGame {
 
     this.ctx!.lineTo((pos.x + 1) * this.unit, (pos.y + 0.2) * this.unit);
     this.ctx!.lineTo((pos.x + 1) * this.unit, (pos.y + 0.8) * this.unit);
+    this.ctx!.closePath();
+    this.ctx!.fill();
+    this.ctx!.restore();
+  }
+  drawCurvedSnake(pos: Position, vector: Position, backVector: Position): void {
+    // normalizedIsUp - a flag that is true when: if the backVector is rotated to point right, 
+    //                  then this flag is set to true when the front vector points up; false otherwise.
+    // Checking the 4 possibilities carefully below...
+    let normalizedIsUp: boolean = true;
+    if (
+      (backVector.x === 1 && vector.y === -1) ||
+      (backVector.x === -1 && vector.y === 1) ||
+      (backVector.y === 1 && vector.x === 1) ||
+      (backVector.y === -1 && vector.x === -1)
+    ) {
+      normalizedIsUp = true;
+    } else {
+      normalizedIsUp = false;
+      console.log(vector);
+      console.log(backVector)
+    }
+    console.log(normalizedIsUp);
+    this.ctx!.save();
+    this.rotateSnakePart(pos, backVector);
+    console.log("vector ---------- backVector");
+    this.ctx!.fillStyle = this.snakeColor;
+
+    this.ctx!.beginPath();
+    if (normalizedIsUp) {
+      this.ctx!.moveTo(pos.x * this.unit, (pos.y + 0.2) * this.unit);
+      this.ctx!.quadraticCurveTo(
+        (pos.x + 0.5) * this.unit,
+        (pos.y + 0.5) * this.unit,
+        (pos.x + 0.2) * this.unit,
+        pos.y * this.unit
+      );
+      this.ctx!.lineTo((pos.x + 0.8) * this.unit, pos.y * this.unit);
+
+      this.ctx!.quadraticCurveTo(
+        (pos.x + 1) * this.unit,
+        (pos.y + 1) * this.unit,
+        pos.x * this.unit,
+        (pos.y + 0.8) * this.unit
+      );
+    } else {
+      this.ctx!.moveTo(pos.x * this.unit, (pos.y + 0.8) * this.unit);
+      this.ctx!.quadraticCurveTo(
+        (pos.x + 0.5) * this.unit,
+        (pos.y + 0.5) * this.unit,
+        (pos.x + 0.2) * this.unit,
+        (pos.y + 1) * this.unit
+      );
+      this.ctx!.lineTo((pos.x + 0.8) * this.unit, (pos.y + 1) * this.unit);
+
+      this.ctx!.quadraticCurveTo(
+        (pos.x + 1) * this.unit,
+        pos.y * this.unit,
+        pos.x * this.unit,
+        (pos.y + 0.2) * this.unit
+      );
+    }
+
     this.ctx!.closePath();
     this.ctx!.fill();
     this.ctx!.restore();
@@ -355,8 +438,10 @@ class SnakeGame {
 <template>
   <div class="title-container" ref="titleRef">
     <h1 class="title">Snake Game</h1>
-    <span class="title-item">SCORE: {{ score }}</span>
-    <span class="title-item">HIGH SCORE: {{ highscore }}</span>
+    <div>
+      <span class="title-item">SCORE: {{ score }}</span>
+      <span class="title-item">HIGH SCORE: {{ highscore }}</span>
+    </div>
   </div>
 
   <div class="container" ref="containerRef">
