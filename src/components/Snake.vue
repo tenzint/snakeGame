@@ -105,7 +105,7 @@ class SnakeGame {
     this.moveNext();
   }
   updateScore(): void {
-    this.score = this.snake.length;
+    this.score = this.snake.length * 10;
     score.value = this.score;
   }
   didSnakeEat(): boolean {
@@ -205,16 +205,99 @@ class SnakeGame {
   drawSnake(): void {
     this.ctx!.beginPath();
     this.ctx!.fillStyle = this.snakeColor;
-    this.snake.forEach((pos) => {
-      this.ctx!.rect(
-        pos.x * this.unit,
-        (pos.y + 0.2) * this.unit,
-        this.unit,
-        this.unit * 0.6
-      );
-      this.ctx!.fill();
+    let vec: Position = { x: 0, y: 0 };
+    this.snake.forEach((pos, i) => {
+      if (i === 0) {
+        vec.x = this.velocity.x;
+        vec.y = this.velocity.y;
+        this.drawSnakeHead(pos, vec);
+      } else if (i === this.snake.length - 1) {
+        vec.x = this.snake[i - 1].x - this.snake[i].x;
+        vec.y = this.snake[i - 1].y - this.snake[i].y;
+        this.drawSnakeTail(pos, vec);
+      } else {
+        vec.x = this.snake[i - 1].x - this.snake[i].x;
+        vec.y = this.snake[i - 1].y - this.snake[i].y;
+        this.drawSnakeBody(pos, vec);
+      }
     });
     this.ctx!.closePath();
+  }
+  rotateSnakePart(pos: Position, vector: Position): void {
+    this.ctx!.translate((pos.x + 0.5) * this.unit, (pos.y + 0.5) * this.unit);
+    var angle: number = 0;
+
+    if (vector.x === 1 && vector.y === 0) {
+      angle = 0;
+    } else if (vector.x === -1 && vector.y === 0) {
+      angle = Math.PI;
+    } else if (vector.x === 0 && vector.y === 1) {
+      angle = Math.PI * 0.5;
+    } else if (vector.x === 0 && vector.y === -1) {
+      angle = Math.PI * 1.5;
+    }
+    this.ctx!.rotate(angle);
+    this.ctx!.translate(-1 * (pos.x + 0.5) * this.unit, -1 * (pos.y + 0.5) * this.unit);
+  }
+  drawSnakeHead(pos: Position, vector: Position): void {
+    this.ctx!.save();
+    this.rotateSnakePart(pos, vector);
+    this.ctx!.fillStyle = this.snakeColor;
+    this.ctx!.beginPath();
+    this.ctx!.moveTo(pos.x * this.unit, (pos.y + 0.2) * this.unit);
+
+    this.ctx!.lineTo((pos.x + 0.2) * this.unit, pos.y * this.unit);
+    this.ctx!.lineTo((pos.x + 1) * this.unit, (pos.y + 0.3) * this.unit);
+    this.ctx!.lineTo((pos.x + 1) * this.unit, (pos.y + 0.7) * this.unit);
+    this.ctx!.lineTo((pos.x + 0.2) * this.unit, (pos.y + 1) * this.unit);
+    this.ctx!.lineTo(pos.x * this.unit, (pos.y + 0.8) * this.unit);
+    this.ctx!.closePath();
+    this.ctx!.fill();
+    this.ctx!.restore();
+  }
+  drawSnakeTail(pos: Position, vector: Position): void {
+    this.ctx!.save();
+    this.rotateSnakePart(pos, vector);
+    this.ctx!.fillStyle = this.snakeColor;
+    this.ctx!.beginPath();
+    this.ctx!.moveTo(pos.x * this.unit, (pos.y + 0.5) * this.unit);
+
+    this.ctx!.lineTo((pos.x + 1) * this.unit, (pos.y + 0.2) * this.unit);
+    this.ctx!.lineTo((pos.x + 1) * this.unit, (pos.y + 0.8) * this.unit);
+    this.ctx!.closePath();
+    this.ctx!.fill();
+    this.ctx!.restore();
+  }
+  drawSnakeBody(pos: Position, vector: Position): void {
+    // 1. Rotate the body part based on vector direction
+    this.ctx!.save();
+    this.rotateSnakePart(pos, vector);
+
+    // 2. Draw the snake body part oriented right.
+    this.ctx!.fillStyle = this.snakeColor;
+    this.ctx!.beginPath();
+    this.ctx!.moveTo(pos.x * this.unit, (pos.y + 0.2) * this.unit);
+    this.ctx!.bezierCurveTo(
+      (pos.x + 0.3) * this.unit,
+      (pos.y + 0.4) * this.unit,
+      (pos.x + 0.6) * this.unit,
+      (pos.y - 0.1) * this.unit,
+      (pos.x + 1) * this.unit,
+      (pos.y + 0.2) * this.unit
+    );
+    this.ctx!.lineTo((pos.x + 1) * this.unit, (pos.y + 0.8) * this.unit);
+
+    this.ctx!.bezierCurveTo(
+      (pos.x + 0.6) * this.unit,
+      (pos.y + 0.6) * this.unit,
+      (pos.x + 0.3) * this.unit,
+      (pos.y + 1) * this.unit,
+      pos.x * this.unit,
+      (pos.y + 0.8) * this.unit
+    );
+    this.ctx!.closePath();
+    this.ctx!.fill();
+    this.ctx!.restore();
   }
   drawFood(): void {
     this.ctx!.globalAlpha = 0.8;
