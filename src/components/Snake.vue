@@ -70,7 +70,7 @@ class SnakeGame {
       return res();
     });
   }
-  async restart(): void {
+  async restart(): Promise<void> {
     // keep code dry. Some restart codes here
     if (highscore.value < score.value) {
       highscore.value = score.value;
