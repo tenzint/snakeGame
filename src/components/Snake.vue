@@ -1,22 +1,16 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-var canvasRef = ref<HTMLCanvasElement | null | undefined>(null);
-var titleRef = ref<HTMLDivElement | null>(null);
-var containerRef = ref<HTMLDivElement | null>(null);
+let canvasRef = ref<HTMLCanvasElement | null | undefined>(null);
+let titleRef = ref<HTMLDivElement | null>(null);
+let containerRef = ref<HTMLDivElement | null>(null);
+let pausePlay = ref<string>("");
 let self: SnakeGame;
 let score = ref<number>(0);
-let highscore = ref<number>(0);
 interface Position {
   x: number;
   y: number;
 }
-
-onMounted(() => {
-  const snake = new SnakeGame();
-  document.addEventListener("keydown", snake.arrowPressed);
-  snake.start();
-  score.value = snake.score;
-});
+let highscore = ref<number>(0);
 class SnakeGame {
   cRef: HTMLCanvasElement | null | undefined;
   ctx: CanvasRenderingContext2D | null;
@@ -54,41 +48,40 @@ class SnakeGame {
     this.food = { x: Math.random() * this.width, y: Math.random() * this.height };
     this.score = 0;
     this.playingMode = false;
+    pausePlay.value = "Pause";
   }
-  setup(): void {
-    if (window.innerWidth >= 1080) this.unit = 40;
-    else if (window.innerWidth >= 720) this.unit = 30;
-    else this.unit = 20;
-    containerRef.value!.style.height =
-      window.innerHeight - titleRef.value!.offsetHeight + "px";
+  setup(): Promise<void> {
+    return new Promise((res, rej) => {
+      if (window.innerWidth >= 1080) this.unit = 40;
+      else if (window.innerWidth >= 720) this.unit = 30;
+      else this.unit = 20;
+      containerRef.value!.style.height =
+        window.innerHeight - titleRef.value!.offsetHeight + "px";
 
-    let widthRatio = 1;
-    if (window.innerWidth >= 600) widthRatio = 0.8;
-    this.cRef!.width =
-      Math.floor((window.innerWidth * widthRatio) / this.unit) * this.unit;
-    this.cRef!.height =
-      Math.floor((window.innerHeight - titleRef.value!.offsetHeight - 10) / this.unit) *
-      this.unit;
-    this.width = Math.floor(this.cRef!.width / this.unit);
-    this.height = Math.floor(this.cRef!.height / this.unit);
+      let widthRatio = 1;
+      if (window.innerWidth >= 600) widthRatio = 0.8;
+      this.cRef!.width =
+        Math.floor((window.innerWidth * widthRatio) / this.unit) * this.unit;
+      this.cRef!.height =
+        Math.floor((window.innerHeight - titleRef.value!.offsetHeight - 10) / this.unit) *
+        this.unit;
+      this.width = Math.floor(this.cRef!.width / this.unit);
+      this.height = Math.floor(this.cRef!.height / this.unit);
+      return res();
+    });
   }
-  cleanTimer(): void {
-    clearInterval(this.timer);
-  }
-  togglePausePlay(): void {
-    if (this.playingMode) {
-      // Playing; pause the game
-      this.playingMode = false;
-      if (this.timer) this.cleanTimer();
-    } else {
-      // Paused; play the game
-      this.playingMode = true;
-      if (this.timer) this.cleanTimer();
-      this.timer = setInterval(() => this.moveNext(), 150);
+  async restart(): void {
+    // keep code dry. Some restart codes here
+    if (highscore.value < score.value) {
+      highscore.value = score.value;
     }
+    this.cleanTimer();
+    this.playingMode = false;
+    pausePlay.value = "Pause";
+    await this.start();
   }
-  start(): void {
-    this.setup();
+  async start(): Promise<void> {
+    await this.setup();
     let halfW = Math.floor(this.width / 2);
     let halfH = Math.floor(this.height / 2);
     this.snake = [];
@@ -98,14 +91,28 @@ class SnakeGame {
     this.snake.push({ x: halfW - 1, y: halfH });
     this.snake.push({ x: halfW - 2, y: halfH });
     this.snake.push({ x: halfW - 3, y: halfH });
-    this.snake.push({ x: halfW - 4, y: halfH });
     this.updateScore();
     this.randomizeFood();
-    this.playingMode = false;
-    this.moveNext();
+    this.draw();
+  }
+  cleanTimer(): void {
+    clearInterval(this.timer);
+  }
+  togglePausePlay(): void {
+    if (this.timer) this.cleanTimer();
+    if (this.playingMode) {
+      // Playing; pause the game
+      this.playingMode = false;
+      pausePlay.value = "Pause";
+    } else {
+      // Paused; play the game
+      this.playingMode = true;
+      pausePlay.value = "Play";
+      this.timer = setInterval(() => this.moveNext(), 100);
+    }
   }
   updateScore(): void {
-    this.score = this.snake.length * 10;
+    this.score = this.snake.length * 10 - 40;
     score.value = this.score;
   }
   didSnakeEat(): boolean {
@@ -114,15 +121,6 @@ class SnakeGame {
       this.updateScore();
       return true;
     } else return false;
-  }
-  restart(): void {
-    // keep code dry. Some restart codes here
-    if (highscore.value < score.value) {
-      highscore.value = score.value;
-    }
-    this.cleanTimer();
-    this.playingMode = false;
-    this.start();
   }
   checkForMistakes(): void {
     if (
@@ -156,7 +154,6 @@ class SnakeGame {
 
     let ate = this.didSnakeEat();
     if (!ate) this.snake.pop();
-    this.ctx?.clearRect(0, 0, this.width * this.unit, this.height * this.unit);
     this.draw();
   }
   /*----------------------------------------------------------------
@@ -190,6 +187,9 @@ class SnakeGame {
   }
   draw(): void {
     this.ctx = this.cRef!.getContext("2d");
+    // clear old drawing first
+    this.ctx?.clearRect(0, 0, this.width * this.unit, this.height * this.unit);
+
     this.ctx!.fillStyle = this.color2;
     this.ctx!.fillRect(0, 0, this.width * this.unit, this.height * this.unit);
     this.ctx!.fillStyle = this.canvasColor;
@@ -229,7 +229,7 @@ class SnakeGame {
   }
   rotateSnakePart(pos: Position, vector: Position): void {
     this.ctx!.translate((pos.x + 0.5) * this.unit, (pos.y + 0.5) * this.unit);
-    var angle: number = 0;
+    let angle: number = 0;
 
     if (vector.x === 1 && vector.y === 0) {
       angle = 0;
@@ -290,7 +290,7 @@ class SnakeGame {
     this.ctx!.restore();
   }
   drawCurvedSnake(pos: Position, vector: Position, backVector: Position): void {
-    // normalizedIsUp - a flag that is true when: if the backVector is rotated to point right, 
+    // normalizedIsUp - a flag that is true when: if the backVector is rotated to point right,
     //                  then this flag is set to true when the front vector points up; false otherwise.
     // Checking the 4 possibilities carefully below...
     let normalizedIsUp: boolean = true;
@@ -397,13 +397,13 @@ class SnakeGame {
     radgrad.addColorStop(1, this.foodColor);
     this.ctx!.fillStyle = radgrad;
     /*
-    this.ctx!.fillRect(
-      (this.food.x + 0.2) * this.unit,
-      (this.food.y + 0.2) * this.unit,
-      0.6 * this.unit,
-      0.6 * this.unit
-    );
-    */
+      this.ctx!.fillRect(
+        (this.food.x + 0.2) * this.unit,
+        (this.food.y + 0.2) * this.unit,
+        0.6 * this.unit,
+        0.6 * this.unit
+      );
+      */
     this.ctx!.beginPath();
     this.ctx!.arc(
       (this.food.x + 0.5) * this.unit,
@@ -429,12 +429,36 @@ class SnakeGame {
     }
   }
 }
+let snake: SnakeGame;
+
+onMounted(() => {
+  snake = new SnakeGame();
+  document.addEventListener("keydown", snake.arrowPressed);
+  snake.start().then(() => {
+    // browser has an 'animation' delay that results in wrong width/height value.
+    // calling start again after the delay solves this.
+    // using Promise to get the right time, setTimeout() isn't accurate
+    snake.start();
+  });
+  score.value = snake.score;
+  // window.setTimeout(() => snake.start(), 5000);
+});
+
+const togglePausePlay = () => snake.togglePausePlay();
+const moveUp = () => snake.moveUp();
+const moveDown = () => snake.moveDown();
+const moveLeft = () => snake.moveLeft();
+const moveRight = () => snake.moveRight();
 </script>
 
 <template>
   <div class="title-container" ref="titleRef">
-    <h1 class="title">Snake Game</h1>
-    <div>
+    <div class="title-big">
+      <h1 class="title">Snake Game</h1>
+      <span class="title-left howto">How to play</span>
+      <button class="button title-left" @click="togglePausePlay">{{ pausePlay }}</button>
+    </div>
+    <div class="title-small">
       <span class="title-item">SCORE: {{ score }}</span>
       <span class="title-item">HIGH SCORE: {{ highscore }}</span>
     </div>
@@ -453,18 +477,59 @@ class SnakeGame {
   box-shadow: 0 5px 10px 10px rgb(256, 256, 256, 0.3);
 }
 .title-container {
+  --clr-green: #1b5e20;
   margin: 0;
   padding: 0;
+  font-size: 1rem;
   display: flex;
-  flex-flow: row wrap;
+  flex-flow: column wrap;
   align-items: center;
-  justify-content: center;
-  background: rgba(128, 128, 128, 0.5);
+  text-align: center;
 }
-@media (max-width: 800px) {
+.title-big {
+  display: flex;
+  text-align: center;
+  flex-flow: column wrap;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+}
+.title-small {
+  margin: 0;
+  padding: 0;
+}
+.title {
+  margin: 0;
+  padding: 0;
+  font-size: 2.5rem;
+  color: var(--clr-green);
+}
+.title-left {
+  flex: 1 1;
+}
+@media (min-width: 750px) {
   .title-container {
-    flex-direction: column;
+    flex-direction: row;
   }
+  .title-big {
+    flex-direction: row;
+    flex: 8;
+    justify-content: flex-end;
+  }
+  .title-small {
+    flex: 4;
+  }
+  .title {
+    flex: 6;
+  }
+  .howto {
+    flex: 4;
+  }
+}
+.title-item {
+  padding: 0;
+  text-align: right;
+  margin: 1rem 0.5rem;
 }
 .container {
   margin: 0;
@@ -474,17 +539,11 @@ class SnakeGame {
   justify-content: center;
   max-height: 100%;
 }
-.title {
-  margin: 1rem 2rem;
-  padding: 0;
-  font-size: 1.5rem;
-  flex-grow: 10;
-  text-align: center;
-}
-.title-item {
-  margin: 1rem 1rem;
-  padding: 0;
-  flex-grow: 1;
-  text-align: right;
+.button {
+  cursor: pointer;
+  padding: 0.5em 1.25em;
+  display: inline-block;
+  color: white;
+  background-color: var(--clr-green);
 }
 </style>

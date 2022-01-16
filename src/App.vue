@@ -11,11 +11,12 @@ components: {
 </template>
 
 <style>
-document,
 html,
 body,
 #app {
   margin: 0;
+  padding: 0;
+  box-sizing: border-box;
   font-size: 1em;
   line-height: 2;
   background-color: rgba(128, 128, 128, 0.3);
