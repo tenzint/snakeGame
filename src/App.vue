@@ -19,7 +19,7 @@ body,
   box-sizing: border-box;
   font-size: 1em;
   line-height: 2;
-  background-color: rgba(128, 128, 128, 0.3);
+  background-color: rgba(143, 143, 143, 0.3);
   max-height: 100vh;
 }
 

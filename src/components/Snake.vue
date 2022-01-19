@@ -6,6 +6,7 @@ let containerRef = ref<HTMLDivElement | null>(null);
 let pausePlay = ref<string>("");
 let self: SnakeGame;
 let score = ref<number>(0);
+let dialog = ref<boolean>(false);
 interface Position {
   x: number;
   y: number;
@@ -452,20 +453,46 @@ const moveRight = () => snake.moveRight();
 </script>
 
 <template>
-  <div class="title-container" ref="titleRef">
-    <div class="title-big">
-      <h1 class="title">Snake Game</h1>
-      <span class="title-left howto">How to play</span>
-      <button class="button title-left" @click="togglePausePlay">{{ pausePlay }}</button>
-    </div>
-    <div class="title-small">
-      <span class="title-item">SCORE: {{ score }}</span>
-      <span class="title-item">HIGH SCORE: {{ highscore }}</span>
-    </div>
+  <div class="dialog" v-show="dialog">
+    <h1 class="dialog-title title">Snake Game</h1>
+    <ul class="dialog-content">
+      <li>
+        Move the snake around and eat food to grow to get as high a score as possible
+      </li>
+      <li>The snake dies when it hits the border of the canvas or its own body</li>
+      <li>Control the snake's direction via the arrow keys</li>
+      <li>
+        Toggle the game state to pause<strong>/</strong>play via pressing the 'P' key or
+        the Play<strong>/</strong>Pause button
+      </li>
+    </ul>
   </div>
+  <div class="container">
+    <div class="title-container" ref="titleRef">
+      <div class="title-big">
+        <span class="main">
+          <h1 class="title text-shadow-white green-font">Snake Game</h1>
+          <span class="howto" @click="dialog = true">How to play</span>
+        </span>
+        <button class="button title-left" @click="togglePausePlay">
+          {{ pausePlay }}
+        </button>
+      </div>
+      <div class="title-small">
+        <span class="title-item">
+          <strong>SCORE:</strong>
+          <span class="green-font"> {{ score }} </span>
+        </span>
+        <span class="title-item">
+          <strong>HIGH SCORE:</strong>
+          <span class="green-font"> {{ highscore }} </span>
+        </span>
+      </div>
+    </div>
 
-  <div class="container" ref="containerRef">
-    <canvas id="snakeCanvas" ref="canvasRef"> </canvas>
+    <div class="canvas-container" ref="containerRef" @click="dialog = false">
+      <canvas id="snakeCanvas" ref="canvasRef"> </canvas>
+    </div>
   </div>
 </template>
 
@@ -476,7 +503,11 @@ const moveRight = () => snake.moveRight();
   border: 5px ridge #aaaaaa;
   box-shadow: 0 5px 10px 10px rgb(256, 256, 256, 0.3);
 }
+.container {
+  /*position: absolute;*/
+}
 .title-container {
+  /*position: relative;*/
   --clr-green: #1b5e20;
   margin: 0;
   padding: 0;
@@ -498,40 +529,38 @@ const moveRight = () => snake.moveRight();
   margin: 0;
   padding: 0;
 }
+.main {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 .title {
   margin: 0;
   padding: 0;
   font-size: 2.5rem;
-  color: var(--clr-green);
+  width: 12ch;
+  text-align: center;
 }
 .title-left {
   flex: 1 1;
 }
-@media (min-width: 750px) {
-  .title-container {
-    flex-direction: row;
-  }
-  .title-big {
-    flex-direction: row;
-    flex: 8;
-    justify-content: flex-end;
-  }
-  .title-small {
-    flex: 4;
-  }
-  .title {
-    flex: 6;
-  }
-  .howto {
-    flex: 4;
-  }
+.howto {
+  font-style: italic;
+  color: #111111;
+  cursor: pointer;
+  align-self: flex-end;
+  margin-bottom: 1rem;
+  border-radius: 1rem;
 }
 .title-item {
   padding: 0;
   text-align: right;
   margin: 1rem 0.5rem;
 }
-.container {
+.canvas-container {
+  /* position: relative; */
   margin: 0;
   padding: 0;
   display: flex;
@@ -545,5 +574,69 @@ const moveRight = () => snake.moveRight();
   display: inline-block;
   color: white;
   background-color: var(--clr-green);
+}
+.dialog {
+  --clr-green: #1b5e20;
+  display: flex;
+  position: fixed;
+  align-items: center;
+  flex-flow: column wrap;
+  gap: 1rem;
+  background: #ffffff;
+  top: 50%;
+  left: 50%;
+  width: 80vw;
+  height: 80vh;
+  font-size: 1rem;
+  padding: 1.5rem 1rem;
+  margin: -40vh 0 0 -40vw;
+  line-height: 1.6rem;
+  border: .2rem solid #5E1B59;
+  border-radius: 1rem;
+  box-shadow: 0 4px 38rem 12rem var(--clr-green);
+}
+.dialog-title {
+  flex: 0 1 min-content;
+  color: white;
+  text-shadow: -1px 0 3px #5E1B59, 0 1px 3px #5E1B59, 1px 0 3px #5E1B59, 0 -1px 3px #5E1B59;
+}
+.dialog-content {
+  flex: 1 1 1;
+  max-width: 70ch;
+  list-style: square outside;
+  margin: 0;
+  padding: 0;
+  border-left: 5px double var(--clr-green);
+  padding-left: 1.5rem;
+}
+.green-font {
+  color: var(--clr-green);
+}
+.text-shadow-white {
+  text-shadow: -1px 0 1px white, 0 1px 1px white, 1px 0 1px white, 0 -1px 1px white;
+}
+@media (min-width: 750px) {
+  .title-container {
+    flex-direction: row;
+  }
+  .title-big {
+    flex-direction: row;
+    flex: 8;
+    gap: 1rem;
+    justify-content: center;
+  }
+  .title-small {
+    flex: 4;
+  }
+  .main {
+    flex: 6;
+  }
+  .howto {
+    width: 12ch;
+  }
+  .dialog {
+    width: 60vw;
+    margin-left: -30vw;
+  }
 }
 </style>
